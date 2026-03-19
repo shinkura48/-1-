@@ -2,12 +2,12 @@
 <html lang="ja">
 <head>
 <meta charset="UTF-8">
-<title>常識クイズゲーム</title>
+<title>一問一答クイズ</title>
 <style>
 body{
   margin:0;
   font-family:sans-serif;
-  background:linear-gradient(135deg,#11998e,#38ef7d);
+  background:linear-gradient(135deg,#667eea,#764ba2);
   display:flex;
   justify-content:center;
   align-items:center;
@@ -21,110 +21,131 @@ body{
   text-align:center;
   box-shadow:0 0 15px rgba(0,0,0,0.2);
 }
-h1{
-  margin-top:0;
-}
+h1{margin-top:0;}
 button{
-  display:block;
   width:100%;
-  margin:8px 0;
+  margin-top:10px;
   padding:10px;
   border:none;
   border-radius:10px;
   font-size:16px;
   cursor:pointer;
-  background:#eee;
 }
-button:hover{
-  background:#ddd;
-}
-.correct{
-  background:#8bc34a !important;
-  color:white;
-}
-.wrong{
-  background:#f44336 !important;
-  color:white;
-}
+.choice{background:#eee;}
+.choice:hover{background:#ddd;}
 #nextBtn{
-  margin-top:10px;
   background:#2196f3;
   color:white;
+  display:none;
+}
+#result{
+  margin-top:15px;
+  font-weight:bold;
+  font-size:18px;
+}
+#score{
+  margin-top:10px;
 }
 </style>
 </head>
 <body>
 
 <div class="container">
-  <h1>📚 常識クイズ</h1>
-  <div id="question">ボタンを押してスタート！</div>
+  <h1>📚 一問一答クイズ</h1>
+  <div id="question"></div>
   <div id="choices"></div>
-  <button id="nextBtn" onclick="nextQuestion()">次の問題</button>
+  <div id="result"></div>
+  <div id="score"></div>
+  <button id="nextBtn" onclick="nextQuestion()">次へ</button>
 </div>
 
 <script>
 const quizData = [
-  {
-    question:"日本の首都はどこ？",
-    choices:["大阪","東京","京都","名古屋"],
-    answer:1
-  },
-  {
-    question:"水の化学式は？",
-    choices:["CO2","H2O","O2","NaCl"],
-    answer:1
-  },
-  {
-    question:"1年は何日？（通常）",
-    choices:["365日","360日","366日","300日"],
-    answer:0
-  },
-  {
-    question:"太陽が昇る方角は？",
-    choices:["西","北","東","南"],
-    answer:2
-  },
-  {
-    question:"日本の通貨は？",
-    choices:["ドル","ウォン","円","ユーロ"],
-    answer:2
-  }
+  {q:"日本の首都は？", c:["大阪","東京","京都","福岡"], a:1},
+  {q:"水の化学式は？", c:["CO2","H2O","O2","NaCl"], a:1},
+  {q:"1年は何日？", c:["365","360","366","300"], a:0},
+  {q:"太陽が昇る方角は？", c:["西","北","東","南"], a:2},
+  {q:"日本の通貨は？", c:["ドル","ウォン","円","ユーロ"], a:2},
+  {q:"地球は太陽の周りを何という？", c:["自転","公転","回転","循環"], a:1},
+  {q:"英語で犬は？", c:["Cat","Dog","Bird","Fish"], a:1},
+  {q:"オリンピックは何年ごと？", c:["2年","3年","4年","5年"], a:2},
+  {q:"1000mは何km？", c:["0.1","1","10","100"], a:1},
+  {q:"人間の心臓はいくつ？", c:["1","2","3","4"], a:0},
+  {q:"富士山の高さは約？", c:["1000m","2000m","3776m","5000m"], a:2},
+  {q:"英語でありがとうは？", c:["Hello","Bye","Thanks","Sorry"], a:2},
+  {q:"電気を通す金属は？", c:["木","鉄","紙","ゴム"], a:1},
+  {q:"日本の国花は？", c:["バラ","ひまわり","桜","チューリップ"], a:2},
+  {q:"三角形の内角の和は？", c:["90°","180°","270°","360°"], a:1}
 ];
 
-let currentQuiz;
+let current = 0;
+let score = 0;
+let shuffled = [];
 
-function nextQuestion(){
-  const q = quizData[Math.floor(Math.random()*quizData.length)];
-  currentQuiz = q;
+function shuffle(array){
+  return array.sort(()=>Math.random()-0.5);
+}
 
-  document.getElementById("question").textContent = q.question;
+function start(){
+  shuffled = shuffle([...quizData]);
+  current = 0;
+  score = 0;
+  showQuestion();
+}
+
+function showQuestion(){
+  document.getElementById("result").textContent = "";
+  document.getElementById("nextBtn").style.display = "none";
+
+  const q = shuffled[current];
+  document.getElementById("question").textContent = `Q${current+1}: ${q.q}`;
 
   const choicesDiv = document.getElementById("choices");
   choicesDiv.innerHTML = "";
 
-  q.choices.forEach((choice,index)=>{
+  q.c.forEach((choice,i)=>{
     const btn = document.createElement("button");
     btn.textContent = choice;
-    btn.onclick = ()=>checkAnswer(btn,index);
+    btn.className = "choice";
+    btn.onclick = ()=>answer(i);
     choicesDiv.appendChild(btn);
   });
+
+  document.getElementById("score").textContent = `スコア: ${score}`;
 }
 
-function checkAnswer(button,index){
-  const buttons = document.querySelectorAll("#choices button");
+function answer(i){
+  const q = shuffled[current];
+  const buttons = document.querySelectorAll(".choice");
 
-  buttons.forEach((btn,i)=>{
-    btn.disabled = true;
-    if(i === currentQuiz.answer){
-      btn.classList.add("correct");
-    }else if(i === index){
-      btn.classList.add("wrong");
-    }
-  });
+  buttons.forEach(btn=>btn.disabled=true);
+
+  if(i === q.a){
+    document.getElementById("result").textContent = "⭕ 正解！";
+    score++;
+  }else{
+    document.getElementById("result").textContent = `❌ 不正解！（正解: ${q.c[q.a]}）`;
+  }
+
+  document.getElementById("nextBtn").style.display = "block";
+  document.getElementById("score").textContent = `スコア: ${score}`;
 }
 
-// 初期表示
-nextQuestion();
+function nextQuestion(){
+  current++;
+  if(current < shuffled.length){
+    showQuestion();
+  }else{
+    document.getElementById("question").textContent = "終了！";
+    document.getElementById("choices").innerHTML = "";
+    document.getElementById("result").textContent = `最終スコア: ${score} / ${shuffled.length}`;
+    document.getElementById("nextBtn").textContent = "もう一回";
+    document.getElementById("nextBtn").onclick = start;
+  }
+}
+
+// 初期開始
+start();
 </script>
 
 </body>
